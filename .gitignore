@@ -1,0 +1,6 @@
+/lib
+/*.c
+/*.o
+/*.h
+/gospel_wrapper.fut
+/gospel

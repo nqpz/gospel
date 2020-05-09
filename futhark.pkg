@@ -1,0 +1,4 @@
+require {
+  github.com/diku-dk/lys 0.1.8 #bc6079ec1570407eb1bb64d866ccd407a87a1d3c
+  github.com/diku-dk/cpprandom 1.2.0 #3d95d8db2ea1aedf5822e729786961c57aaa0dec
+}
