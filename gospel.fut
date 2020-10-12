@@ -7,7 +7,7 @@ module dist = uniform_int_distribution i32 rnge
 module rnge_shuffle = mk_shuffle rnge
 type rng = rnge.rng
 
-let size = 19i32
+let size = 19i64
 
 type cell = #white | #black | #empty
 type board = [size][size]cell
@@ -45,7 +45,7 @@ module lys: lys with text_content = text_content = {
   let board_index' (s: state) ((yp, xp): point): (f32, f32, f32, i32, i32) =
     let y = r32 yp / r32 s.h
     let x = r32 xp / r32 s.w
-    let step = 1 / r32 size
+    let step = 1 / f32.i64 size
     let yi = t32 (y / step)
     let xi = t32 (x / step)
     in (y, x, step, yi, xi)
@@ -60,11 +60,11 @@ module lys: lys with text_content = text_content = {
       if cell == #empty
       then #free
       else #depending {top=y > 0 && board[y - 1, x] != other_stone cell,
-                       right=x < size - 1 && board[y, x + 1] != other_stone cell,
-                       bottom=y < size - 1 && board[y + 1, x] != other_stone cell,
+                       right=x < i32.i64 size - 1 && board[y, x + 1] != other_stone cell,
+                       bottom=y < i32.i64 size - 1 && board[y + 1, x] != other_stone cell,
                        left=x > 0 && board[y, x - 1] != other_stone cell}
     let finder_init: finder =
-      map2 (\row y -> map2 (\cell x -> cell_init cell (y, x)) row (0..<size))
+      map2 (\row y -> map2 (\cell x -> cell_init cell (i32.i64 y, i32.i64 x)) row (0..<size))
            board (0..<size)
 
     let finder_step (finder: finder): (finder, bool) =
@@ -80,7 +80,7 @@ module lys: lys with text_content = text_content = {
         case #free -> (#free, false)
       let (finder'_flat, changes) =
         unzip (flatten (map2 (\row y -> map2 (\finder_cell x ->
-                                                finder_cell_step finder_cell (y, x)) row (0..<size))
+                                                finder_cell_step finder_cell (i32.i64 y, i32.i64 x)) row (0..<size))
                              finder (0..<size)))
       let finder' = unflatten size size finder'_flat
       let has_change = or changes
@@ -120,7 +120,7 @@ module lys: lys with text_content = text_content = {
     let move_possible cell (y, x) = match cell
                                     case #empty -> (true, (y, x))
                                     case _ -> (false, (-1, -1))
-    in (unzip (partition (.0) (flatten (map2 (\row y -> map2 (\cell x -> move_possible cell (y, x))
+    in (unzip (partition (.0) (flatten (map2 (\row y -> map2 (\cell x -> move_possible cell (i32.i64 y, i32.i64 x))
                                                              row (0..<size)) board (0..<size)))).0).1
 
   let monte_carlo_iterate (current: cell) (rng: rng) (board: board): (rng, board) =
@@ -131,7 +131,7 @@ module lys: lys with text_content = text_content = {
       while continue
       do let moves_possible = find_moves board
          in if length moves_possible > 0
-            then let (rng, move_i) = dist.rand (0, length moves_possible - 1) rng
+            then let (rng, move_i) = dist.rand (0, i32.i64 (length moves_possible - 1)) rng
                  let (y, x) = moves_possible[move_i]
                  let board[y, x] = current
                  let (board, _, _) = check_liberties board
@@ -153,7 +153,7 @@ module lys: lys with text_content = text_content = {
     let rngs = rnge.split_rng n rng
     let (rngs, scores) = unzip (map2 (monte_carlo_score (next_stone current)) rngs boards)
     let rng = rnge.join_rng rngs
-    let sources = zip (0..<n) scores
+    let sources = zip (map i32.i64 (0..<n)) scores
     let (rng, sources) = rnge_shuffle.shuffle rng sources
     let (move_i, _score_i) = reduce_comm (\(i1, score1) (i2, score2) -> if score1 > score2
                                                                         then (i1, score1)
@@ -167,7 +167,7 @@ module lys: lys with text_content = text_content = {
     in if length moves_possible > 0
        then let (rng, move_i) =
               match s.computer_strategy
-              case #random_move -> dist.rand (0, length moves_possible - 1) s.rng
+              case #random_move -> dist.rand (0, i32.i64 (length moves_possible) - 1) s.rng
               case #monte_carlo -> monte_carlo s.board moves_possible current s.rng -- XXX: Is silly
             let (move_y, move_x) = moves_possible[move_i]
             let board' = copy s.board
@@ -179,14 +179,14 @@ module lys: lys with text_content = text_content = {
 
   let grab_mouse = false
 
-  let init (seed: u32) (h: i32) (w: i32): state =
+  let init (seed: u32) (h: i64) (w: i64): state =
     {board=copy empty_board, n_turns=0,
      play_style=#human_vs_computer, computer_strategy=#random_move,
      n_white_stones=0, n_black_stones=0,
-     w, h, rng=rnge.rng_from_seed [i32.u32 seed], clicked=false}
+     w=i32.i64 w, h=i32.i64 h, rng=rnge.rng_from_seed [i32.u32 seed], clicked=false}
 
-  let resize (h: i32) (w: i32) (s: state): state =
-    s with h = h with w = w
+  let resize (h: i64) (w: i64) (s: state): state =
+    s with h = i32.i64 h with w = i32.i64 w
 
   let click ((yp, xp): point) (s: state): state =
     let (yi, xi) = board_index s (yp, xp)
@@ -239,7 +239,7 @@ module lys: lys with text_content = text_content = {
                 then argb.blue
                 else argb.violet
          else argb.violet
-    in tabulate_2d s.h s.w render_pixel
+    in tabulate_2d (i64.i32 s.h) (i64.i32 s.w) (\y x -> render_pixel (i32.i64 y) (i32.i64 x))
 
   type text_content = text_content
 

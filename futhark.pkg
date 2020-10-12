@@ -1,5 +1,5 @@
 require {
-  github.com/diku-dk/lys 0.1.9 #b12ac4a80d7af42cf0ffe2203b945cd1b7b794c4
-  github.com/diku-dk/cpprandom 1.2.1 #869304710af3a023683d6670316d55dafd973c71
-  github.com/diku-dk/sorts 0.3.14 #7ae67e27d6235a5b67c23b02dc676538b29c9746
+  github.com/diku-dk/lys 0.1.12 #34e5ff985fefac9a9627d49e26a19ef5352e7019
+  github.com/diku-dk/cpprandom 1.3.0 #68b67cb55242db59b79d94b5cdf961b2d654e698
+  github.com/diku-dk/sorts 0.4.0 #94b33a2ba7b4c6669da70cb688fd6d1e5b31aecb
 }
